@@ -45,7 +45,7 @@ bool StaticStabilityRamos::checkItem(const validator::Item& item, validator::Ins
 	
 	bPoint p = getResultantForcePoint(item, instance);
 	
-	std::vector<bPoint> vertices;
+	multi_point vertices;
 	vertices.reserve(item.itemsBelow.size() * 4);
 	bool stable = false;
 	for (const auto& id : item.itemsBelow)
@@ -56,17 +56,16 @@ bool StaticStabilityRamos::checkItem(const validator::Item& item, validator::Ins
 		}
 
 		// Determine Intersection Points
-		vertices.emplace_back(bPoint(std::max(item.min.x, item_k.min.x), std::max(item.min.y, item_k.min.y)));
-		vertices.emplace_back(bPoint(std::min(item.max.x, item_k.max.x), std::max(item.min.y, item_k.min.y)));
-		vertices.emplace_back(bPoint(std::max(item.min.x, item_k.min.x), std::min(item.max.y, item_k.max.y)));
-		vertices.emplace_back(bPoint(std::min(item.max.x, item_k.max.x), std::min(item.max.y, item_k.max.y)));
+		vertices.push_back(bPoint(std::max(item.min.x, item_k.min.x), std::max(item.min.y, item_k.min.y)));
+		vertices.push_back(bPoint(std::min(item.max.x, item_k.max.x), std::max(item.min.y, item_k.min.y)));
+		vertices.push_back(bPoint(std::max(item.min.x, item_k.min.x), std::min(item.max.y, item_k.max.y)));
+		vertices.push_back(bPoint(std::min(item.max.x, item_k.max.x), std::min(item.max.y, item_k.max.y)));
 	}
 
 	if (!stable) {
 		// Get Convex Hull
-		boost::geometry::model::polygon<bPoint> hull;
-		boost::geometry::model::polygon<bPoint> polygon;
-		boost::geometry::convex_hull(polygon, hull);
+		polygon hull;
+		boost::geometry::convex_hull(vertices, hull);
 
 		// Point in Polygon Test
 		stable = boost::geometry::within(p, hull);
@@ -75,10 +74,11 @@ bool StaticStabilityRamos::checkItem(const validator::Item& item, validator::Ins
 	if (stable)	{
 		for (const auto& id : item.itemsBelow) {
 			if (!checkItem(instance.items.at(id), instance)) {
+				stable = false;
 				return false;
 			}
 		}
 	}
 
-	return true;
+	return stable;
 }
