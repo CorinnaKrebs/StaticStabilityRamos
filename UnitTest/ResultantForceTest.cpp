@@ -12,6 +12,30 @@ namespace StaticStability
 	TEST_CLASS(ResultantForce)	{
 		const int dim = 4;
 	public:
+
+
+		TEST_METHOD(Single) {
+			// Items are stacked
+			ItemType type(1, dim, dim, dim, 10, false, 0);
+
+			Item item1(0, 1, 0, type);
+
+			// Instance Creation
+			Instance instance("", Vehicle(0, 0, 0, 0, 0, 0, 0, 0, 0), {}, {}, 0, 0);
+			instance.items.emplace_back(item1);
+
+			// Tour Creation
+			Tour tour(1, {0}, {1});
+
+			// Positions
+			instance.items.at(item1.id).setPosition(validator::Point(0, 0, 0));
+			bPoint p = StaticStabilityRamos::getResultantForcePoint(instance.items.at(item1.id), instance);
+
+			// The Point of the Resultant Force is not influenced
+			Assert::AreEqual(boost::geometry::get<0>(p), dim * 0.5);
+			Assert::AreEqual(boost::geometry::get<1>(p), dim * 0.5);
+
+		}
 		
 		TEST_METHOD(Stacked) {
 			// Items are stacked

@@ -6,24 +6,26 @@
 #include "../../Validator/cpp/Validator/Tour.h"
 
 
-void StaticStabilityRamos::addItemGravitationalForce(const validator::Item& item, long& x, long& y, long& sum) {
-	const float G = 9.81f;
-	const long force = (long) item.mass * G;
-	const unsigned int length = item.rotated ? item.w : item.h;
-	const unsigned int width = item.rotated ? item.l : item.w;
+void StaticStabilityRamos::addItemGravitationalForce(const validator::Item& item, long double& x, long double& y, long double& sum) {
+	const float G = 1.0f;
+	const double force = item.mass * G;
+	const double length = item.rotated ? item.w : item.l;
+	const double width = item.rotated ? item.l : item.w;
 
-	x += (long) (item.min.x + length * 0.5) * force;
-	y += (long) (item.min.y + width * 0.5) * force;
+	x += (item.min.x + length * 0.5) * force;
+	y += (item.min.y + width * 0.5) * force;
 	sum += force;
 }
 
-bPoint StaticStabilityRamos::getResultantForcePoint(const validator::Item& item, validator::Instance& instance) {
+bPoint StaticStabilityRamos::getResultantForcePoint(validator::Item& item, validator::Instance& instance) {
 
-	long x = 0, y = 0, resultantForce = 0;
+	long double x = 0, y = 0, resultantForce = 0;
 
 	addItemGravitationalForce(item, x, y, resultantForce);
-	for (const auto& id : item.itemsAbove)	{
-		addItemGravitationalForce(instance.items.at(id), x, y, resultantForce);
+	for (const auto& id : item.itemsAbove)  {
+		auto& item_above = instance.items.at(id);
+		if (!item_above.isAbove(item, true)) continue;
+		addItemGravitationalForce(item_above, x, y, resultantForce);
 	}
 	x /= resultantForce;
 	y /= resultantForce;
@@ -32,7 +34,8 @@ bPoint StaticStabilityRamos::getResultantForcePoint(const validator::Item& item,
 
 bool StaticStabilityRamos::checkStaticStabilityRamos(validator::Instance& instance, const bool& msg) {
 	// Item Sets (itemsAbove, itemsBelow) must be filled via getRelevantItems beforehand
-	for (const auto& item : instance.items) {
+	for (auto& item : instance.items) {
+		if (item.customer_id == 0) continue;
 		if (!checkItem(item, instance)) {
 			if (msg) std::cerr << "No stable position of Item " << item.id << std::endl;
 			return false;
@@ -41,16 +44,16 @@ bool StaticStabilityRamos::checkStaticStabilityRamos(validator::Instance& instan
 	return true;
 }
 
-bool StaticStabilityRamos::checkItem(const validator::Item& item, validator::Instance& instance) {
-	
+bool StaticStabilityRamos::checkItem(validator::Item& item, validator::Instance& instance) {
+	if (item.min.z == 0) return true;
 	bPoint p = getResultantForcePoint(item, instance);
 	
 	multi_point vertices;
 	vertices.reserve(item.itemsBelow.size() * 4);
 	bool stable = false;
-	for (const auto& id : item.itemsBelow)
-	{
+	for (const auto& id : item.itemsBelow) {
 		validator::Item& item_k = instance.items.at(id);
+		if (!item_k.isBelow(item, true)) continue;
 		if ((item_k.min.x <= p.get<0>() <= item_k.max.x) && (item_k.min.y <= p.get<1>() <= item_k.max.y)) {
 			stable = true;
 		}

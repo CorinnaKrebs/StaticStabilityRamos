@@ -27,7 +27,7 @@ public:
 	 * @param y the weighted y-coordinate
 	 * @param sum the sum of forces
 	 */
-	static void addItemGravitationalForce(const validator::Item& item, long& x, long& y, long& sum);
+	static void addItemGravitationalForce(const validator::Item& item, long double& x, long double& y, long double& sum);
 
 	/**
 	 * Calculates the Resultant Force caused by the item and its above items.
@@ -35,7 +35,7 @@ public:
 	 * @param instance the instance data to get additional information
 	 * @return Boost-Point containing the x- and y-coordinate of the point of the resultant force
 	 */
-	static bPoint getResultantForcePoint(const validator::Item& item, validator::Instance& instance);
+	static bPoint getResultantForcePoint(validator::Item& item, validator::Instance& instance);
 
 	
 	/**
@@ -44,7 +44,7 @@ public:
 	 * @param instance the instance data to get additional information
 	 * @return true if the position of the item is stable.
 	 */
-	static bool checkItem(const validator::Item& item, validator::Instance& instance);
+	static bool checkItem(validator::Item& item, validator::Instance& instance);
 
 	
 	/**
